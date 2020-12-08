@@ -134,23 +134,28 @@ sub CheckAll {
 
   if ($in{'hops'} ne '') {
     &terror('traceroute_err_hops') if (length($in{'hops'}) > 2);
+    my $hops = $in{'hops'} + 0;
 
-    $trace_opt = "-m $in{'hops'}";
+    $trace_opt = "-m $hops";
   }
 
   if ($in{'iface'} ne '') {
-    &terror('traceroute_err_iface') if (length $in{'iface'} > 6);
+    &terror('traceroute_err_iface') if (length $in{'iface'} > 6 || $in{'iface'} !~ /^[a-zA-Z0-9]+$/ );
     $trace_opt = "$trace_opt -i $in{'iface'}";
   }
 
   if ($in{'wait'} ne '') {
     &terror('traceroute_err_time') if (length $in{'wait'} > 2);
-    $trace_opt = "$trace_opt -w $in{'wait'}";
+    my $wait = $in{'wait'} + 0;
+
+    $trace_opt = "$trace_opt -w $wait";
   }
 
   if ($in{'inittime'} ne '') {
     &terror('traceroute_err_ittl') if (length $in{'inittime'} > 2);
-    $trace_opt = "$trace_opt -f $in{'inittime'}";
+    my $inittime = $in{'inittime'} + 0;
+
+    $trace_opt = "$trace_opt -f $inittime";
   }
 
   if ($in{'numeric'} eq 'X') { $trace_opt = "$trace_opt -n" }
@@ -161,8 +166,9 @@ sub CheckAll {
 
   if ($in{'length'} ne '') {
     &terror('traceroute_err_length') if (length($in{'length'}) > 3);
+    my $length = $in{'length'} + 0;
 
-    $trace_opt = "$trace_opt $in{'host'} $in{'length'}";
+    $trace_opt = "$trace_opt $in{'host'} $length";
   } else {
     $trace_opt = "$trace_opt $in{'host'}";
   }
