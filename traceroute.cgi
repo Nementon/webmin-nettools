@@ -60,10 +60,6 @@ $text{'hostname'}:
 <tr><td valign="top">
 EOM
 
-print "<INPUT TYPE=checkbox NAME=\"verbosity\" VALUE=\"X\"";
-if ($in{'verbosity'} eq "X") { print " checked" }
-print "> $text{'traceroute_verbout'}<br/>";
-
 print "<INPUT TYPE=checkbox NAME=\"numeric\" VALUE=\"X\"";
 if ($in{'numeric'} eq "X") { print " checked" }
 print "> $text{'traceroute_numout'}<br/>";
@@ -75,10 +71,6 @@ print "> $text{'traceroute_bypass'}<br/>";
 print "<INPUT TYPE=checkbox NAME=\"icmp\" VALUE=\"X\"";
 if ($in{'icmp'} eq "X") { print " checked" }
 print "> $text{'traceroute_icmp'}<br/>";
-
-print "<INPUT TYPE=checkbox NAME=\"toggle\" VALUE=\"X\"";
-if ($in{'toggle'} eq "X") { print " checked" }
-print "> $text{'traceroute_toggle'}<br/>";
 
 print "<INPUT TYPE=checkbox NAME=\"debug\" VALUE=\"X\"";
 if ($in{'debug'} eq "X") { print " checked" }
@@ -161,11 +153,9 @@ sub CheckAll {
     $trace_opt = "$trace_opt -f $in{'inittime'}";
   }
 
-  if ($in{'verbosity'} eq 'X') { $trace_opt = "$trace_opt -v" }
   if ($in{'numeric'} eq 'X') { $trace_opt = "$trace_opt -n" }
   if ($in{'bypass'} eq 'X') { $trace_opt = "$trace_opt -r" }
   if ($in{'icmp'} eq 'X') { $trace_opt = "$trace_opt -I" }
-  if ($in{'toggle'} eq 'X') { $trace_opt = "$trace_opt -x" }
   if ($in{'debug'} eq 'X') { $trace_opt = "$trace_opt -d" }
 
 
