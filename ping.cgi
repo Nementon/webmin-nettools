@@ -138,6 +138,7 @@ sub CheckAll {
   &terror('error_nohost') if (! $in{'host'});
   &terror('error_longhostname') if (length($in{'host'}) > 64);
   &terror('error_badchar', $in{'host'}) if ($in{'host'} !~ /^([a-z]*[A-Z]*[0-9]*[+.-]*)+$/);
+  &terror('error_badchar', $in{'padbytes'}) if (defined($in{'padbytes'}) && $in{'padbytes'} && $in{'padbytes'} !~ /^[0-9a-fA-F]+$/);
 
   if (! $in{'count'}) { $in{'count'} = 5; }
   &terror('ping_err_tmpack') if (length($in{'count'}) > 2);
