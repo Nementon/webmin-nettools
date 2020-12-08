@@ -113,17 +113,18 @@ EOM
 
 
 
-
-
 sub CheckAll {
 
   my $execline="";
   my $lookup_opt="-sil";
+  my @allowed_types = ('a', 'any', 'cname', 'hinfo', 'minfo', 'mx', 'ns', 'ptf', 'soa', 'txt', 'uinfo', 'wks');
 
   # Check host, or IP
   &terror('error_nohost') if ($in{'host'} eq '');
   &terror('error_longhostname') if (length($in{'host'}) > 64);
+  &terror('error_badchar', $in{'type'}) if (defined($in{'type'}) && !(grep $_ eq $in{'type'}, @allowed_types));
   &terror('error_badchar', $in{'host'}) if ($in{'host'} !~ /^([a-z]*[A-Z]*[0-9]*[+.-]*)+$/);
+  &terror('error_badchar', $in{'nameserver'}) if (!$in{'nsdefault'} && !&check_ipaddress($in{'nameserver'}));
 
   if (! $in{'type'}) {
     $in{'type'} = "a";
@@ -133,6 +134,7 @@ sub CheckAll {
   if ($in{'timeout'} ne '') {
     &terror('lookup_inv_timeout') if (length($in{'timeout'}) > 2);
 
+    my $timeout = scalar($in{'timeout'});
     $lookup_opt = "$lookup_opt -timeout=$in{'timeout'}";
   }
 
