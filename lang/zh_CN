@@ -119,7 +119,6 @@ nmap_ackport=在下面的端口号发出ACK包
 nmap_ping=使用 ping 检查主机是否处于活动状态
 nmap_ackping_parallel=同时使用ACK和ICMP的 ping 
 nmap_osdet=试图通过 TCP/IP-fingerprint 探测操作系统类型
-nmap_ident=TCP 翻转同一扫描
 nmap_tinyfrag=对于 SYN, FIN. XMAS 或 NULL 扫描时使用小的IP包
 nmap_scanports=扫描下列端口号
 nmap_fastscan=快速扫描: 仅仅扫描在 /etc/services 列出的端口号
