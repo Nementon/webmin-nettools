@@ -128,37 +128,40 @@ EOM
 
 sub CheckAll {
 
-@error=();
+  @error=();
+  my @allowed_query_type = ('a', 'any', 'cname', 'hinfo', 'minfo', 'mx', 'ns', 'ptr', 'soa', 'txt', 'uinfo', 'wks');
 
-# Check host, or IP
-if ($in{'host'} eq '') {
-        push(@error, "$text{'error_nohost'}\n");
+  &terror('error_badchar', $in{'type'}) if (!(grep $_ eq $in{'type'}, @allowed_query_type));
+  &terror('error_badchar', $in{'host'}) if (defined($in{'host'}) && !($in{'host'} eq '') && $in{'host'} =~ /[^\w\-\.]/);
+  &terror('error_badchar', $in{'nameserver'}) if (defined($in{'nameserver'}) && !($in{'nameserver'} eq '') && !&check_ipaddress($in{'nameserver'}));
+
+  # Check host, or IP
+  if ($in{'host'} eq '') {
+    push(@error, "$text{'error_nohost'}\n");
 	$critical_err = 1;
-} elsif (length $in{'host'} >64) {
-        push(@error, "$text{'error_longhostname'}\n");
+  } elsif (length $in{'host'} >64) {
+    push(@error, "$text{'error_longhostname'}\n");
 	$critical_err = 1;
-} elsif ($in{'host'} =~ /[^\w\-\.]/) {
-        push(@error, &text('error_badchar', $in{'host'})."\n");
+  } elsif ($in{'host'} =~ /[^\w\-\.]/) {
+    push(@error, &text('error_badchar', $in{'host'})."\n");
 	$critical_err = 1;
-}
+  }
 
-if (!$in{'nsdefault'}) { $dig_opt="@$in{'nameserver'}" }
+  if (!$in{'nsdefault'}) { $dig_opt="@$in{'nameserver'}" }
 
-if ($in{'dotted'}) {
- if (!&check_ipaddress($in{'host'})) {
-   push(@error, "$text{'dig_err_dotted'}\n");
-   $critical_err = 1;
- } else {
-  $dig_opt .= " -x $in{'host'}";
- }
-} else {
- $dig_opt .= " $in{'host'}";
-}
+  if ($in{'dotted'}) {
+    if (!&check_ipaddress($in{'host'})) {
+      push(@error, "$text{'dig_err_dotted'}\n");
+      $critical_err = 1;
+    } else {
+      $dig_opt .= " -x $in{'host'}";
+    }
+  } else {
+    $dig_opt .= " $in{'host'}";
+  }
 
-$dig_opt .= " $in{'type'}";
-
-$execline = "$binary $dig_opt 2>&1";
-
+  $dig_opt .= " $in{'type'}";
+  $execline = "$binary $dig_opt 2>&1";
 } # End Sub CheckAll
 
 
