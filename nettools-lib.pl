@@ -86,6 +86,19 @@ sub is_number {
 }
 
 
+sub terror {
+   my ($error_key, $hurtful_value) = @_;
+   my $err = &text($error_key, &html_escape($hurtful_value));
+
+   &header("Oops!", undef, undef, 0, 0, 0, undef);
+   print "<BR><BR>";
+   print "<HR SIZE=4 NOSHADE ALIGN=center>\n$err";
+   print "</PRE>\n<HR SIZE=4 NOSHADE ALIGN=center>\n\n";
+   &footer("javascript:window.history.back();", $text{'lookup_return'});
+
+   exit 0  
+}
+
 my %modconf;
 read_file("module.conf", \%modconf);
 $version=$modconf{'VERSION'};
