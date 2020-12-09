@@ -111,9 +111,9 @@ print "<TD><INPUT TYPE=checkbox NAME=\"p0\" VALUE=\"1\"";
 if ($in{'p0'}) { print " checked" }
 print "> $text{'nmap_noping'}</TD></tr>";
 
-print "<TR><TD><INPUT TYPE=checkbox NAME=\"pt\" VALUE=\"1\"";
-if ($in{'pt'}) { print " checked" }
-print "> $text{'nmap_ackport'}: <INPUT TPYE=text NAME=\"ptport\" VALUE=\"$in{'ptport'}\" SIZE=5> </TD>";
+print "<TR><TD><INPUT TYPE=checkbox NAME=\"pa\" VALUE=\"1\"";
+if ($in{'pa'}) { print " checked" }
+print "> $text{'nmap_ackport'}: <INPUT TPYE=text NAME=\"paport\" VALUE=\"$in{'paport'}\" SIZE=5> </TD>";
 
 print "<TD><INPUT TYPE=checkbox NAME=\"pi\" VALUE=\"1\"";
 if ($in{'pi'}) { print " checked" }
@@ -126,10 +126,6 @@ print "> $text{'nmap_ackping_parallel'}</TD>";
 print "<TD><INPUT TYPE=checkbox NAME=\"o\" VALUE=\"1\"";
 if ($in{'o'}) { print " checked" }
 print "> $text{'nmap_osdet'}</TD></TR>";
-
-print "<TR><TD><INPUT TYPE=checkbox NAME=\"i\" VALUE=\"1\"";
-if ($in{'i'}) { print " checked" }
-print "> $text{'nmap_ident'}</TD>";
 
 print "<TD><INPUT TYPE=checkbox NAME=\"f\" VALUE=\"1\"";
 if ($in{'f'}) { print " checked" }
@@ -173,128 +169,163 @@ EOM
 &footer("index.cgi", $text{'nmap_return'});
 
 
-
-
-
-
-
-
-
 sub CheckAll {
 
-@error="";
+  @error="";
+  my @allowed_scantypes = ('-sN', '-sP', '-sS', '-sT', '-sU', '-sX', '-sF');
 
-# Check host, or IP
-if ($in{'host'} eq '') {
-        push(@error, "$text{'error_nohost'}\n");
+  &terror('error_badchar', $in{'scantype'}) if (defined($in{'scantype'}) && !(grep $_ eq $in{'scantype'}, @allowed_scantypes));
+  &terror('error_badchar', $in{'host'}) if (defined($in{'host'}) && $in{'host'} =~ /[^\w\-\.]/);
+  &terror('traceroute_err_iface', $in{'iface'}) if (defined($in{'iface'}) && !($in{'iface'} eq '') && (length $in{'iface'} > 6 || $in{'iface'} !~ /^[a-zA-Z0-9]+$/ ));
+
+  # Check host, or IP
+  if ($in{'host'} eq '') {
+    push(@error, "$text{'error_nohost'}\n");
 	$critical_err = 1;
-} elsif (length $in{'host'} >64) {
-        push(@error, "$text{'error_longhostname'}\n");
+  } elsif (length $in{'host'} > 64) {
+    push(@error, "$text{'error_longhostname'}\n");
 	$critical_err = 1;
-} elsif ($in{'host'} =~ /[^\w\-\.]/) {
-        push(@error, &text('error_badchar', $in{'host'})."\n");
+  } elsif ($in{'host'} =~ /[^\w\-\.]/) {
+    push(@error, &text('error_badchar', $in{'host'})."\n");
 	$critical_err = 1;
-}
+  }
 
-if (! $in{'scantype'}) {
-  $in{'scantype'} = "-sT";
-}
-$nmap_opt="$in{'scantype'}";
+  if (! $in{'scantype'} ) {
+    $in{'scantype'} = "-sT";
+  }
 
-if ($in{'verbosity'}) { $nmap_opt .= " -v" }
-if ($in{'p0'}) { $nmap_opt .= " -P0" }
+  $nmap_opt="$in{'scantype'}";
 
-if ($in{'pt'}) {
- $in{'ptport'} =~ s/\ //g;
- if (!$in{'ptport'}) {
+  if ($in{'verbosity'}) { $nmap_opt .= " -v" }
+  if ($in{'p0'}) { $nmap_opt .= " -P0" }
+
+  if ($in{'pa'}) {
+    $in{'paport'} =~ s/\ //g;
+    if (!$in{'paport'}) {
       push(@error, $text{'nmap_err_ack'});
- } elsif ($in{'ptport'} < 0) {
-      push(@error, $text{'nmap_err_lowport'});
- } elsif ($in{'ptport'} > 65535) {
-      push(@error, $text{'nmap_err_highport'});
- } else {
-  $nmap_opt .= " -PT$in{'ptports'}";
- }
-}
+    } else {
+      my $scanned_ports_optn = "";
+      my @scanned_ports = ();
+      my @ports = split(',', $in{'paport'});
 
-if ($in{'pi'}) { $nmap_opt .= " -PI" }
-if ($in{'pb'}) { $nmap_opt .= " -PB" }
-if ($in{'o'}) { $nmap_opt .= " -O" }
-if ($in{'i'}) { $nmap_opt .= " -I" }
-if ($in{'f'}) { $nmap_opt .= " -f" }
+      foreach my $port (@ports) {
+        $port = $port + 0;
+        if ($port <= 0) {
+          &terror('nmap_err_lowport', $in{'paport'});
+        }
+        elsif ($port > 65535) {
+          &terror('nmap_err_highport', $in{'paport'});
+        }
+        else {
+          push(@scanned_ports, $port);
+        }
+      }
 
-if ($in{'p'}) {
- $in{'ports'} =~ s/\ //g;
- if (!$in{'ports'}) {
+      $scanned_ports_optn = join(',', @scanned_ports);
+      $nmap_opt .= " -PA$scanned_ports_optn";
+    }
+  }
+
+  if ($in{'pi'}) { $nmap_opt .= " -PI" }
+  if ($in{'pb'}) { $nmap_opt .= " -PB" }
+  if ($in{'o'}) { $nmap_opt .= " -O" }
+  if ($in{'f'}) { $nmap_opt .= " -f" }
+
+  if ($in{'p'}) {
+    $in{'ports'} =~ s/\ //g;
+    if (!$in{'ports'}) {
       push(@error, $text{'nmap_err_port'});
- }
- elsif ($in{'ports'} =~ m/[a-z]*[A-Z]*/g) {
-      push(@error, $text{'nmap_err_ports'});
- }
- elsif ($in{'ports'} < 0) {
-      push(@error, $text{'nmap_err_lowport'});
- }
- elsif ($in{'ports'} > 65535) {
-      push(@error, $text{'nmap_err_highport'});
- }
- else {
-   $nmap_opt .= " -p $in{'ports'}";
- }
-}
+    }
+    else {
+      my $scanned_ports_optn = "";
+      my @scanned_ports = ();
+      my @ports = split(',', $in{'ports'});
 
-if ($in{'fast'}) { $nmap_opt .= " -F" }
+      foreach my $port (@ports) {
+        $port = $port + 0;
+        if ($port <= 0) {
+          &terror('nmap_err_lowport', $in{'ports'});
+        }
+        elsif ($port > 65535) {
+          &terror('nmap_err_highport', $in{'ports'});
+        }
+        else {
+          push(@scanned_ports, $port);
+        }
+      }
 
-if ($in{'d'}) {
- $in{'decoys'} =~ s/\ //g;
- if (!$in{'decoys'}) {
+      $scanned_ports_optn = join(',', @scanned_ports);
+      $nmap_opt .= " -p $scanned_ports_optn";
+    }
+  }
+
+  if ($in{'fast'}) { $nmap_opt .= " -F" }
+
+  if ($in{'d'}) {
+    $in{'decoys'} =~ s/\ //g;
+    if (!$in{'decoys'}) {
       push(@error, $text{'nmap_err_decoys'});
- }
- else {
-   $nmap_opt .= " -D $in{'decoys'}";
- }
-}
+    }
+    else {
+      my $decoys_optn = "";
+      my @decoys = ();
+      my @in_decoys = split(',', $in{'decoys'});
 
+      foreach my $decoy (@in_decoys) {
+        if (!&check_ipaddress($decoy)) {
+          &terror('error_badchar', $in{'decoys'});
+        } 
+        else {
+          push(@decoys, $decoy);
+        }
+      }
 
-if ($in{'e'}) {
- $in{'iface'} =~ s/\ //g;
- if (!$in{'iface'}) {
+      $decoys_optn = join(',', @decoys);
+      $nmap_opt .= " -D$decoys_optn";
+    }
+  }
+
+  if ($in{'e'}) {
+    $in{'iface'} =~ s/\ //g;
+    if (!$in{'iface'}) {
       push(@error, $text{'nmap_err_iface'});
- }
- else {
-   $nmap_opt .= " -e $in{'iface'}";
- }
-}
+    }
+    else {
+      $nmap_opt .= " -e $in{'iface'}";
+    }
+  }
 
-if ($in{'g'}) {
- $in{'sport'} =~ s/\ //g;
- if (!$in{'sport'}) {
+  if ($in{'g'}) {
+    $in{'sport'} =~ s/\ //g;
+    if (!$in{'sport'}) {
       push(@error, $text{'nmap_err_sport'});
- }
- else {
-   $nmap_opt .= " -g $in{'sport'}";
- }
-}
+    }
+    else {
+      my $src_port = $in{'sport'} + 0;
+      $nmap_opt .= " -g $src_port";
+    }
+  }
 
-if ($in{'m'}) {
- $in{'sockets'} =~ s/\ //g;
- if (!$in{'sockets'}) {
+  if ($in{'m'}) {
+    $in{'sockets'} =~ s/\ //g;
+    if (!$in{'sockets'}) {
       push(@error, $text{'nmap_err_maxsock'});
- }
- elsif ($in{'sockets'} < 0) {
+    }
+    elsif ($in{'sockets'} < 0) {
       push(@error, $text{'nmap_err_lowsock'});
- }
- elsif ($in{'sockets'} > 16) {
+    }
+    elsif ($in{'sockets'} > 16) {
       push(@error, $text{'nmap_err_bigsock'});
- }
- else {
-   $nmap_opt .= " -M $in{'sockets'}";
- }
-}
+    }
+    else {
+      my $socket = $in{'sockets'} + 0;
+      $nmap_opt .= " -M $socket";
+    }
+  }
 
 
-$execline ="$binary $nmap_opt $in{'host'} 2>&1";
-
-return $execline;
+  $execline ="$binary $nmap_opt $in{'host'} 2>&1";
+  return $execline;
 } # End Sub CheckAll
 
 ### End of nmap.cgi ###
