@@ -129,6 +129,7 @@ EOM
 sub CheckAll {
 
   @error=();
+  my $dig_opt = "";
   my @allowed_query_type = ('a', 'any', 'cname', 'hinfo', 'minfo', 'mx', 'ns', 'ptr', 'soa', 'txt', 'uinfo', 'wks');
 
   &terror('error_badchar', $in{'type'}) if (!(grep $_ eq $in{'type'}, @allowed_query_type));
@@ -147,7 +148,9 @@ sub CheckAll {
 	$critical_err = 1;
   }
 
-  if (!$in{'nsdefault'}) { $dig_opt="@$in{'nameserver'}" }
+  if (!$in{'nsdefault'} && $in{'nameserver'}) { 
+    $dig_opt .= " $in{'nameserver'}";
+  }
 
   if ($in{'dotted'}) {
     if (!&check_ipaddress($in{'host'})) {
