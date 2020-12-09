@@ -86,11 +86,22 @@ sub CheckAll {
 
   my $whois_opt = "";
   my $execline = "";
+  if (!$config{'whois_servers'}) {
+    @servers=("whois.crsnic.net", "whois.networksolutions.com", "whois.corenic.net", "whois.internic.net", "whois.denic.de", "whois.ripe.net");
+  } else {
+    my $tmpstr=$config{'whois_servers'};
+    $tmpstr =~ s/\ //g;
+    @servers=();
+    foreach $_ (split(/\,/, $tmpstr) ) {
+      push(@servers, $_);
+    }
+  }
 
   # Check host, or IP
   &terror('error_nohost') if (! $in{'domain'});
   &terror('error_longhostname') if (length($in{'domain'}) > 64);
   &terror('error_badchar', $in{'domain'}) if ($in{'domain'} !~ /^([a-z]*[A-Z]*[0-9]*[+.-]*)+$/);
+  &terror('error_badchar', $in{'server'}) if ($in{'server'} ne '' &&  !(grep $_ eq $in{'server'}, @servers) );
 
   if ($in{'server'} ne '') {
     $whois_opt = "-h $in{'server'}";
